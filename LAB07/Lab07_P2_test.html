@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+    <html>
+        <head>
+            <title>AaronH_LAB07_Brinton</title>
+            <meta charset="utf-8"/>
+                  
+            <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+            <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+            <script>
+                if (typeof L !== "undefined"){
+                    L.Mixin = L.Mixin || {};
+                    if (!L.Mixin.Events){
+                        L.Mixin.Events = L.Evented.prototype;
+                    }
+                }
+            </script>
+
+            <script src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
+            <script src="https://code.jquery.com/ui/1.9.2/jquery-ui.js"></script>
+
+            <link rel="stylesheet" href="https://code.jquery.com/ui/1.9.2/themes/base/jquery-ui.css">
+
+            <script src="https://dsps.lib.uiowa.edu/placing/public/leafletSlider-1.0.2/leaflet.SliderControl.min.js"></script>
+
+            <script src="https://dsps.lib.uiowa.edu/placing/public/fuse-1.2.1/fuse.min.js"></script>
+            <script src="https://dsps.lib.uiowa.edu/placing/public/leafletFuseSearch-noVersion/leafletfuse.js"></script>
+
+            <link rel="stylesheet" href="https://dsps.lib.uiowa.edu/placing/public/leafletFuseSearch-noVersion/leafletfuse.css"/>
+
+            <script src="brinton_data.js"></script>
+
+            <script>
+                brintonJson.features.forEach(function(f){
+                    f.properties.time = f.properties.time.toString();
+                });
+            </script>
+
+            <style>
+                #map {width:100%; height:650px}
+            </style>
+        
+        </head>
+
+        <body>
+            <div id="map"></div>
+            
+            <script>
+
+                var basemap = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{
+                    attribution: '©OpenStreetMap ©CartoDB',
+                    subdomains: 'abcd'
+                });
+
+                var map = L.map('map',{
+                    center:[41.5,-95.5],
+                    zoom:6,
+                    layers:[basemap]
+                });
+                             
+                var onEachFeature = function(feature, layer){
+                    if (feature.properties){
+                        var prop = feature.properties;
+
+                        var popup = 
+                            '<h3>'+prop["name"] + '</h3>' +
+                            '<strong>Year:</strong> ' + prop["time"];
+
+                        feature.layer = layer;
+                        layer.bindPopup(popup,{maxWidth:"auto"});
+                    }
+                };
+
+                var blueCircleMarkers = {
+                    radius:4,
+                    fillColor:"#00AEEF",
+                    color:"#3978BF",
+                    weight:1,
+                    opacity:0.8,
+                    fillOpacity:0.5
+                };
+
+                var orangeCircleMarkers = {
+                    radius:5,
+                    fillColor:"#ED1C24",
+                    color:"#ED1C24",
+                    weight:1,
+                    opacity:1,
+                    fillOpacity:0.7
+                };
+
+                var greenCircleMarkers = {
+                    radius:5,
+                    fillColor:"#ffff00",
+                    color:"#286933",
+                    weight:1,
+                    opacity:1,
+                    fillOpacity:0.7
+                };
+               
+                var firstlayer = L.geoJson(brintonJson,{
+                    onEachFeature:onEachFeature,
+                    pointToLayer:function(feature,latlng){
+                        return L.circleMarker(latlng,blueCircleMarkers);
+                    }
+                });
+                       
+               var timelineLayer = L.featureGroup();
+               L.geoJson(brintonJson,{
+                onEachFeature: onEachFeature,
+                pointToLayer: function(feature,latlng){
+                    return L.circleMarker(latlng,orangeCircleMarkers);
+                }
+               }).eachLayer(function(layer){
+                timelineLayer.addLayer(layer);
+               });         
+          
+                timelineLayer.addTo(map);
+
+                 var sliderControl = L.control.sliderControl({
+                    position:"topright",
+                    layer: timelineLayer,
+                    range:false
+                });
+
+                sliderControl.addTo(map);
+                sliderControl.startSlider();
+                               
+                var searchLayer = L.geoJson(brintonJson,{
+                    onEachFeature:onEachFeature,
+                    pointToLayer:function(feature,latlng){
+                        return L.circleMarker(latlng,greenCircleMarkers);
+                    }
+                });
+  
+                var searchOptions = {
+                  position:'topleft',
+                  title:'Search',
+                  placeholder:'Search opera house or town',
+                  maxResultLength:10,
+                  caseSensitive:false,
+                  showInvisibleFeatures:true,
+                  threshold:0.5,
+                  showResultFct:function(feature,container){
+                    var props = feature.properties;
+                    var name = L.DomUtil.create('b',null,container);
+                    name.innerHTML = props.name;
+                    container.appendChild(document.createTextNode("Year:" + props.time));
+                  },
+                  zoomToResult: true
+                };
+               
+                var searchControl = L.control.fuseSearch(searchOptions);
+                map.addControl(searchControl);
+
+                searchControl.indexFeatures(
+                    timelineLayer.getLayers().map(function(layer){
+                        return layer.feature;
+                    }),
+                    ['name']
+                );
+
+                function displayFeatures(features,layer){
+                    for (var id in features){
+                        var feat = features[id];
+                        var site = L.geoJson(feat,{
+                            pointToLayer: function(feature,latlng){
+                                return L.circleMarker(latlng,greenCircleMarkers);
+                            },
+                            onEachFeature: onEachFeature
+                        });
+
+                        if (layer !== undefined){
+                            layer.addLayer(site);
+                        }
+                    }
+                    return layer;
+                }
+
+                var overlays = {
+                    "Brinton Tour Stops": firstlayer
+                };
+
+                var baseMaps = {
+                    "Historic": basemap
+                };
+
+                L.control.layers(overlays,baseMaps,{collapsed:false}).addTo(map);
+
+            </script>
+        </body>
+    </html>
