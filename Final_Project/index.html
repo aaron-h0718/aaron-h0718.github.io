@@ -22,6 +22,30 @@
                     attribution: '&copy; OpenStreetMap contributors'
                 }).addTo(map);
 
+                function highlightFeature(e){
+                    var layer = e.target;
+                    layer.setStyle({
+                        weight: 3,
+                        color: '#666',
+                        fillOpacity: 0.7
+                    });
+
+                    layer.bringToFront();
+                }
+
+                function resetHighlight(e){
+                    geojson.resetStyle(e.target);
+                }
+
+                function onEachFeature(feature, layer){
+                    layer.on({
+                        mouseover: highlightFeature,
+                        mouseout: resetHightlight
+                    });
+
+                    layer.bindPopup("<b>Prefecture:</b> " + feature.properties.nam);
+                }
+
                 fetch('japan_prefectures.geojson')
                     .then(response => {
                         if (!response.ok){
@@ -31,14 +55,13 @@
                     })
                     .then(data => {
                         console.log("GeoJSON loaded successfully");
-                        L.geoJSON(data,{
+                        geojson = L.geoJSON(data,{
                             style: {
                                 color: "blue",
                                 weight: 1
+                                fillOpacity: 0.2
                             },
-                            onEachFeature: function(feature, layer){
-                                layer.bindPopup("<b>Prefectures:</b> " + feature.properties.nam);
-                            }
+                            onEachFeature: onEachFeature                            
                         }).addTo(map);
                     })
                     .catch(error => {
@@ -47,5 +70,5 @@
 
             </script>
         </body>
-
     </html>
+
