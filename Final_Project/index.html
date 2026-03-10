@@ -35,6 +35,9 @@
                             style: {
                                 color: "blue",
                                 weight: 1
+                            },
+                            onEachFeature: function(feature, layer){
+                                layer.bindPopup("<b>Prefectures:</b> " + feature.properties.nam);
                             }
                         }).addTo(map);
                     })
@@ -44,4 +47,5 @@
 
             </script>
         </body>
+
     </html>
