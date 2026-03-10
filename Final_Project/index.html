@@ -22,8 +22,11 @@
                     attribution: '&copy; OpenStreetMap contributors'
                 }).addTo(map);
 
+                var geojson;
+                
                 function highlightFeature(e){
                     var layer = e.target;
+                    
                     layer.setStyle({
                         weight: 3,
                         color: '#666',
@@ -40,7 +43,7 @@
                 function onEachFeature(feature, layer){
                     layer.on({
                         mouseover: highlightFeature,
-                        mouseout: resetHightlight
+                        mouseout: resetHighlight
                     });
 
                     layer.bindPopup("<b>Prefecture:</b> " + feature.properties.nam);
@@ -58,7 +61,7 @@
                         geojson = L.geoJSON(data,{
                             style: {
                                 color: "blue",
-                                weight: 1
+                                weight: 1,
                                 fillOpacity: 0.2
                             },
                             onEachFeature: onEachFeature                            
@@ -71,4 +74,5 @@
             </script>
         </body>
     </html>
+
 
